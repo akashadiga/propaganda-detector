@@ -1,0 +1,27 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Large dataset files (too large for GitHub — obtain separately)
+Dataset/
+
+# Old / unused model artifacts
+model.pkl
+tfidfvect.pkl
+
+# Backup files
+*.bak
+
+# Environment variables
+.env
+
+# NLTK local data
+nltk_data/
+
+# OS files
+.DS_Store
+Thumbs.db
