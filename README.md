@@ -1,6 +1,6 @@
 # Propaganda News Detector
 
-A Flask-based machine learning web application that classifies news text as **Propaganda** or **non-Propaganda** using a trained PassiveAggressiveClassifier with TF-IDF vectorization.
+A full-stack machine learning web application that classifies news text as **Propaganda** or **non-Propaganda**. The backend is a Flask REST API powered by a PassiveAggressiveClassifier with TF-IDF vectorization. The frontend is a modern Angular 21 single-page app styled with Tailwind CSS.
 
 ---
 
@@ -30,7 +30,7 @@ Users paste a news article (or generate a random one from the built-in dataset) 
 | Data handling | pandas 3.0.2 |
 | Model persistence | joblib 1.5.3 |
 | Forms & validation | Flask-WTF 1.3.0, WTForms 3.2.1 |
-| Frontend | Bootstrap 3, jQuery, Animate.css, Owl Carousel |
+| Frontend | Angular 21, Tailwind CSS 3, Inter font |
 | Production server | Gunicorn 23.0.0 (Heroku Procfile included) |
 
 ### Main Entry Point
@@ -60,14 +60,27 @@ C:\Propaganda\
 ├── .gitignore                      # Git exclusions
 │
 ├── templates/
-│   └── home.html                   # Single-page UI (Bootstrap, Jinja2 templating)
+│   └── home.html                   # Legacy Flask-rendered UI (Bootstrap 3)
 │
-└── static/
-    ├── css/                        # Bootstrap, Animate.css, custom styles
-    ├── js/                         # jQuery, flexslider, owl carousel, main.js
-    ├── images/                     # Background images, loader gif
-    ├── fonts/                      # Bootstrap glyphicons, Flaticon, IcoMoon
-    └── sass/                       # SASS source files for Bootstrap theme
+├── static/                         # Legacy static assets (Bootstrap 3, jQuery)
+│
+└── frontend/                       # NEW: Angular 21 frontend
+    ├── src/
+    │   ├── app/
+    │   │   ├── app.ts              # Root component — holds state (result)
+    │   │   ├── app.html            # Root template
+    │   │   ├── app.config.ts       # Providers: HttpClient
+    │   │   ├── components/
+    │   │   │   ├── navbar/         # Top navigation bar
+    │   │   │   ├── predictor/      # Input form + char counter + buttons
+    │   │   │   └── result/         # Result cards + verdict badge
+    │   │   └── services/
+    │   │       └── prediction.service.ts  # HTTP calls to Flask API
+    │   ├── index.html
+    │   └── styles.css              # Tailwind base + global styles
+    ├── proxy.conf.json             # Forwards /api/* → Flask :5000
+    ├── tailwind.config.js
+    └── angular.json
 ```
 
 ### Request Flow
@@ -214,14 +227,56 @@ joblib.dump(v, 'tfidfvect2.pkl')
 
 ---
 
+### 7. Angular Frontend Migration
+
+**What:** Replaced the Bootstrap 3 / jQuery frontend with a modern Angular 21 single-page app styled with Tailwind CSS. The Flask backend is unchanged; the Angular app communicates with it via a REST API.
+
+**Why:** The old frontend was a generic portfolio template with 1,473 lines of CSS (mostly dead code), 15 unused JavaScript libraries, no loading state, results below a 600px dead hero image, and no character counter. The new frontend is purpose-built for this tool.
+
+**Components built:**
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `NavbarComponent` | `components/navbar/` | Clean top bar — logo + GitHub link, no auth stubs |
+| `PredictorComponent` | `components/predictor/` | Textarea with live char counter, Generate + Analyze buttons, spinner during API call |
+| `ResultComponent` | `components/result/` | Verdict banner (RED = Propaganda, GREEN = non-Propaganda) + 2-panel detail cards |
+| `PredictionService` | `services/prediction.service.ts` | `HttpClient` calls to `/api/predict` (POST) and `/api/random` (GET) |
+
+**New Flask API endpoints added (`app.py`):**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/predict` | POST | Accepts `{ "text": "..." }` JSON body, returns prediction |
+| `/api/random` | GET | Returns random sample as JSON |
+
+**CORS** enabled on `/api/*` for `localhost:4200` via `flask-cors`.
+
+**Angular proxy** (`proxy.conf.json`) forwards all `/api/*` calls from the Angular dev server to Flask at `:5000` — no hardcoded URLs in Angular code.
+
+**Color theme — bright & simple:**
+
+| Role | Color |
+|------|-------|
+| Background | White `#FFFFFF` |
+| Primary (buttons) | Sky blue `#0EA5E9` |
+| Propaganda verdict | Bright red `#EF4444` |
+| Non-Propaganda verdict | Bright green `#22C55E` |
+| Text | Near-black `#0F172A` |
+
+---
+
 ## How to Run Locally
 
 ### Prerequisites
 
 - Python 3.10 or higher
+- Node.js 18 or higher + npm
+- Angular CLI (`npm install -g @angular/cli`)
 - Git
 
-### Setup Steps
+---
+
+### Backend (Flask)
 
 ```bash
 # 1. Clone the repository
@@ -233,86 +288,133 @@ python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS / Linux
 
-# 3. Install dependencies
+# 3. Install Python dependencies
 pip install -r requirements.txt
 
 # 4. Download NLTK stopwords (one-time)
 python -c "import nltk; nltk.download('stopwords')"
 
-# 5. Start the development server
+# 5. Start Flask
 python app.py
 ```
 
-The app will be available at **http://127.0.0.1:5000**.
+Flask runs at **http://localhost:5000**.
+
+---
+
+### Frontend (Angular)
+
+```bash
+# In a second terminal — from the repo root
+cd frontend
+
+# 1. Install Node dependencies (one-time)
+npm install
+
+# 2. Start the Angular dev server
+npm start
+```
+
+Angular runs at **http://localhost:4200**.
+The dev server automatically proxies all `/api/*` requests to Flask at `:5000`.
+
+---
+
+### Running Both Together
+
+Open two terminals side by side:
+
+| Terminal 1 | Terminal 2 |
+|------------|------------|
+| `python app.py` (from repo root) | `npm start` (from `frontend/`) |
+| Runs on `:5000` | Runs on `:4200` |
+
+Then open **http://localhost:4200** in your browser.
 
 ### Notes
 
 - `model2.pkl` and `tfidfvect2.pkl` must be present in the project root — they are committed to the repo.
 - `Dataset/` (training data) is not included in the repo due to file size. The app runs fine without it; it is only needed to retrain the model.
+- `node_modules/` is excluded from git — always run `npm install` after cloning.
 
 ---
 
 ## API Reference
 
-### `GET /`
-Renders the home page with the prediction form.
+### Angular Frontend API (primary)
 
-### `POST /`
-Submits text for prediction. Returns the same page with results rendered.
+#### `POST /api/predict`
+Accepts text, returns prediction. Used by the Angular frontend.
 
-**Form fields:**
-- `original_text` — news text (min 20, max 10,000 characters)
-- `predict` — submit button to trigger prediction
-- `generate` — button to populate the form with a random sample
-
-### `GET /predict/<original_text>`
-Runs prediction on URL-encoded text. Returns JSON.
+**Request body:**
+```json
+{ "text": "paste your news article here" }
+```
 
 **Response:**
 ```json
 {
-  "original": "...",
-  "preprocessed": "...",
+  "original": "paste your news article here",
+  "preprocessed": "past news articl",
   "prediction": "Propaganda"
 }
 ```
 
-### `GET /random`
-Returns a random row from `random_dataset.csv` as JSON.
+#### `GET /api/random`
+Returns a random news sample from the dataset.
 
 **Response:**
 ```json
 {
-  "title": "...",
-  "text": "...",
+  "title": "Article headline...",
+  "text": "Full article text...",
   "label": "0"
 }
 ```
 
 ---
 
+### Legacy Flask UI (kept for backwards compatibility)
+
+#### `GET /` / `POST /`
+The original server-rendered Bootstrap 3 UI. Still functional.
+
+#### `GET /predict/<original_text>`
+Legacy URL-path prediction endpoint. Use `/api/predict` POST instead for long text.
+
+#### `GET /random`
+Legacy random sample endpoint. Equivalent to `/api/random`.
+
+---
+
 ## Known Limitations & Recommendations
 
-### Active Issues
+### Fixed in Angular Migration
+
+| Issue | Status |
+|-------|--------|
+| No loading state during prediction | Fixed — spinner on Analyze button |
+| No character counter | Fixed — live `chars: 0 / 10000` counter |
+| Results below 600px dead hero image | Fixed — result appears directly below input |
+| Identical button color for both verdicts | Fixed — RED for Propaganda, GREEN for non-Propaganda |
+| `/predict/<text>` URL-path breaks on long input | Fixed — new `/api/predict` uses POST with JSON body |
+| `random_dataset.csv` read on every click | Fixed — loaded once at startup in `app.py` |
+| 15 unused JS libraries in frontend | Fixed — Angular + Tailwind only |
+
+### Remaining Active Issues
 
 | Issue | Location | Impact |
 |-------|----------|--------|
-| `SECRET_KEY` is hardcoded | `app.py:10` | Security risk on a public repo — move to `.env` |
-| `output = {}` is a class-level dict | `prediction_model.py:19` | Shared across all instances; causes data bleed under concurrent requests |
-| `random_dataset.csv` read on every button click | `app.py:18` | Unnecessary disk I/O — load once at startup |
-| `/predict/<text>` passes text in the URL path | `app.py:32` | Breaks on long inputs and special characters — should be a POST with JSON body |
-| Inconsistent length check | `app.py:25` checks `> 10`, form validates `min=20` | Minor inconsistency |
-| `PassiveAggressiveClassifier` deprecated | scikit-learn 1.8 warning | Will be removed in scikit-learn 1.10 — model needs retraining with `SGDClassifier` |
+| `SECRET_KEY` is hardcoded | `app.py:11` | Security risk — move to `.env` |
+| `output = {}` is a class-level dict | `prediction_model.py:19` | Data bleed under concurrent requests |
+| `PassiveAggressiveClassifier` deprecated | scikit-learn 1.8 | Will be removed in scikit-learn 1.10 |
 
 ### Recommended Next Steps
 
 1. **Move `SECRET_KEY` to environment variable** — use `python-dotenv` and a `.env` file.
 2. **Fix class-level dict bug** — move `output = {}` into `__init__` as `self.output = {}`.
-3. **Add confidence scores** — `model.predict_proba()` is available and would make results more informative.
-4. **Implement Sign Up / Login** — the navbar buttons exist but have no backing routes or logic.
-5. **Add prediction history** — store results per session using Flask's `session` object.
-6. **Add a loading indicator** — the page freezes while the model runs; a spinner would improve UX.
-7. **Add a character counter** to the textarea so users know how close they are to the 10,000-character limit.
-8. **Write tests** — no tests exist. At minimum, unit tests for `preprocess()` and integration tests for the `/predict` route.
-9. **Retrain the model** — current `.pkl` files were saved with scikit-learn 0.22.2 and carry version warnings. Retraining with the current stack eliminates the compatibility debt. The Jupyter notebook (`propaganda News Prediction.ipynb`) contains the full training pipeline.
-10. **Accept URL input** — scrape article text from a URL so users don't need to copy-paste.
+3. **Add confidence scores** — `model.predict_proba()` would make results more informative; show a percentage alongside the verdict.
+4. **Add prediction history** — store results in the Angular component so users can compare multiple predictions.
+5. **Write tests** — no tests exist. Unit tests for `preprocess()`, integration tests for `/api/predict`.
+6. **Retrain the model** — current `.pkl` files were saved with scikit-learn 0.22.2 and carry version warnings. The Jupyter notebook contains the full training pipeline.
+7. **Accept URL input** — scrape article text from a URL so users don't need to copy-paste.

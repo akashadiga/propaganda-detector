@@ -1,0 +1,75 @@
+<section *ngIf="result" class="max-w-4xl mx-auto px-6 pb-16">
+
+  <!-- Verdict banner -->
+  <div class="rounded-2xl p-6 mb-6 flex items-center gap-4"
+       [ngClass]="isPropaganda
+         ? 'bg-propaganda-light border border-red-200'
+         : 'bg-safe-light border border-green-200'">
+    <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+         [ngClass]="isPropaganda ? 'bg-propaganda' : 'bg-safe'">
+      <!-- X icon for Propaganda -->
+      <svg *ngIf="isPropaganda" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <!-- Check icon for non-Propaganda -->
+      <svg *ngIf="!isPropaganda" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest mb-0.5"
+         [ngClass]="isPropaganda ? 'text-propaganda' : 'text-safe'">
+        Verdict
+      </p>
+      <p class="text-2xl font-bold"
+         [ngClass]="isPropaganda ? 'text-propaganda' : 'text-safe'">
+        {{ result.prediction }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Detail cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Original text -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293
+                 l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-slate-700">Original Text</h3>
+      </div>
+      <p class="text-sm text-slate-600 leading-relaxed max-h-48 overflow-y-auto">
+        {{ result.original }}
+      </p>
+    </div>
+
+    <!-- Preprocessed text -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 rounded-lg bg-sky-50 flex items-center justify-center">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066
+                 c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924
+                 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0
+                 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066
+                 c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756
+                 -2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608
+                 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-slate-700">Preprocessed Text</h3>
+      </div>
+      <p class="text-sm text-slate-500 leading-relaxed font-mono max-h-48 overflow-y-auto">
+        {{ result.preprocessed }}
+      </p>
+    </div>
+  </div>
+</section>
