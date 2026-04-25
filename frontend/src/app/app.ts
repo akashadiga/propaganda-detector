@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { PredictorComponent } from './components/predictor/predictor.component';
@@ -12,9 +12,9 @@ import { PredictionResult } from './services/prediction.service';
   templateUrl: './app.html',
 })
 export class App {
-  result: PredictionResult | null = null;
+  result = signal<PredictionResult | null>(null);
 
-  onResult(result: PredictionResult): void {
-    this.result = result ?? null;
+  onResult(result: PredictionResult | null): void {
+    this.result.set(result);
   }
 }

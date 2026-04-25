@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, computed, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PredictionService, PredictionResult, RandomSample } from '../../services/prediction.service';
@@ -10,63 +10,59 @@ import { PredictionService, PredictionResult, RandomSample } from '../../service
   templateUrl: './predictor.component.html',
 })
 export class PredictorComponent {
-  @Output() resultReady = new EventEmitter<PredictionResult>();
+  resultReady = output<PredictionResult | null>();
 
-  text = '';
-  loading = false;
-  generating = false;
-  error = '';
+  // All reactive state as signals — required for zoneless change detection
+  text = signal('');
+  loading = signal(false);
+  generating = signal(false);
+  error = signal('');
+
   readonly maxChars = 10000;
   readonly minChars = 20;
 
-  get charCount(): number {
-    return this.text.length;
-  }
-
-  get isOverLimit(): boolean {
-    return this.charCount > this.maxChars;
-  }
-
-  get canPredict(): boolean {
-    return this.charCount >= this.minChars && !this.isOverLimit && !this.loading;
-  }
+  charCount = computed(() => this.text().length);
+  isOverLimit = computed(() => this.charCount() > this.maxChars);
+  canPredict = computed(() =>
+    this.charCount() >= this.minChars && !this.isOverLimit() && !this.loading()
+  );
 
   constructor(private predictionService: PredictionService) {}
 
   onPredict(): void {
-    if (!this.canPredict) return;
-    this.loading = true;
-    this.error = '';
-    this.predictionService.predict(this.text).subscribe({
+    if (!this.canPredict()) return;
+    this.loading.set(true);
+    this.error.set('');
+    this.predictionService.predict(this.text()).subscribe({
       next: (result) => {
-        this.loading = false;
+        this.loading.set(false);
         this.resultReady.emit(result);
       },
       error: () => {
-        this.loading = false;
-        this.error = 'Something went wrong. Make sure the Flask server is running.';
+        this.loading.set(false);
+        this.error.set('Something went wrong. Make sure the Flask server is running.');
       },
     });
   }
 
   onGenerate(): void {
-    this.generating = true;
-    this.error = '';
+    this.generating.set(true);
+    this.error.set('');
     this.predictionService.getRandom().subscribe({
       next: (sample: RandomSample) => {
-        this.text = sample.text;
-        this.generating = false;
+        this.text.set(sample.text);
+        this.generating.set(false);
       },
       error: () => {
-        this.generating = false;
-        this.error = 'Could not fetch a random sample.';
+        this.generating.set(false);
+        this.error.set('Could not fetch a random sample.');
       },
     });
   }
 
   onClear(): void {
-    this.text = '';
-    this.error = '';
-    this.resultReady.emit(undefined as any);
+    this.text.set('');
+    this.error.set('');
+    this.resultReady.emit(null);
   }
 }

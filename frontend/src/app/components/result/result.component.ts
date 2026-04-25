@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PredictionResult } from '../../services/prediction.service';
 
@@ -9,9 +9,8 @@ import { PredictionResult } from '../../services/prediction.service';
   templateUrl: './result.component.html',
 })
 export class ResultComponent {
-  @Input() result: PredictionResult | null = null;
+  // Signal-based input — change detection fires when parent signal changes
+  result = input<PredictionResult | null>(null);
 
-  get isPropaganda(): boolean {
-    return this.result?.prediction === 'Propaganda';
-  }
+  isPropaganda = computed(() => this.result()?.prediction === 'Propaganda');
 }
